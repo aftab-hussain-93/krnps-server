@@ -33,9 +33,18 @@ export class AuthController {
     @UseGuards(JwtAuthGuard)
     @Get('/profile')
     async profile(@Request() req: RequestType) {
-        const { password, ...rest } = await this.authService.getProfile(req.user)
+        this.logger.log(`Getting Profile. User - ${JSON.stringify(req.user)}`)
+        const user = await this.authService.getProfile(req.user)
+        if (user) {
+            const { password, ...rest } = user
+            return {
+                status: "ok",
+                user: rest
+            }
+        }
+        this.logger.error(`User Profile not found`)
         return {
-            user: rest
+            error: "User not found"
         }
     }
 }

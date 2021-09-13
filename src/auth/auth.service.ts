@@ -70,7 +70,7 @@ export class AuthService {
         })
     }
 
-    getProfile(loggedInUser: any): Promise<User> {
+    async getProfile(loggedInUser: any): Promise<User> {
         return this.userService.findOne(loggedInUser.id)
     }
 }
