@@ -1,10 +1,13 @@
 import { Sequelize } from 'sequelize';
 import {
+    BelongsTo,
     Column,
+    ForeignKey,
     Model,
     PrimaryKey,
     Table,
 } from 'sequelize-typescript';
+import { User } from '../users/users.model';
 
 @Table({
     timestamps: true,
@@ -22,8 +25,12 @@ export class Event extends Model {
     @Column({})
     description: string;
 
+    @ForeignKey(() => User)
     @Column({ allowNull: false })
     createdBy: number;
+
+    @BelongsTo(() => User)
+    creator: User;
 
     @Column({ allowNull: false })
     fullAddress: string;

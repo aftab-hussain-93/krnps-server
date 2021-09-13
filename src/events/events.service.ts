@@ -4,6 +4,7 @@ import { Event } from './events.model';
 
 import { Op } from 'sequelize';
 import { CreateEventDto } from './dto/event.dto';
+import { User } from '../users/users.model';
 
 @Injectable()
 export class EventsService {
@@ -22,6 +23,24 @@ export class EventsService {
         })
     }
 
+    async findUserEvents(user: any): Promise<Event[]> {
+        let where: any = {
+            deletedAt: {
+                [Op.is]: null
+            },
+        }
+        if (!user.isAdmin) where = { ...where, createdBy: user.id } // return user's events if not an admin otherwise return all events
+        
+        return this.eventModel.findAll({
+            where,
+            include: [{
+                model: User,
+                attributes: ['firstName', 'lastName', 'email'],
+                required: true
+            }]
+        })
+    }
+
     async getUpcomingEvents(): Promise<Event[]> {
         return this.eventModel.findAll({
             where: {
@@ -32,6 +51,21 @@ export class EventsService {
                     [Op.gte]: new Date()
                 }
             }
+        })
+    }
+
+    async getUserAndEvents(): Promise<any> {
+        return this.eventModel.findAll({
+            where: {
+                deletedAt: {
+                    [Op.is]: null
+                }
+            },
+            include: [{
+                model: User,
+                attributes: ['firstName', 'lastName', 'email'],
+                required: true
+            }]
         })
     }
 
@@ -59,5 +93,22 @@ export class EventsService {
             eventDate: new Date(eventDate * 1000),
             createdBy: loggedInUser.id
         })
+    }
+
+    async deleteEvent(eventId: number, loggedInUser: any): Promise<Boolean> {
+        let where: any = {
+            id: eventId
+        }
+        if (!loggedInUser.isAdmin) where = { ...where, createdBy: loggedInUser.id }
+        
+        const event = await this.eventModel.findOne({
+            where
+        })
+        if (event) {
+            event.deletedAt = new Date(Date.now())
+            await event.save()
+            return true
+        }
+        return false
     }
 }

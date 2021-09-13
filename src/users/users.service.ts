@@ -11,8 +11,7 @@ const SALT_ROUNDS: number = 10
 export class UsersService {
     constructor(
         @InjectModel(User)
-        private userModel: typeof User,
-        private sequelize: Sequelize
+        private userModel: typeof User
     ) { }
     
     async findAll(): Promise<User[]>{
@@ -20,14 +19,20 @@ export class UsersService {
     }
 
     async findOne(userId: number): Promise<User>{
-        return this.userModel.findByPk(userId, { raw: true })
+        return this.userModel.findOne({
+            where: {
+                id: userId,
+                isActive: true
+            },
+            raw: true
+        })
     }
 
-    async findByEmail(email: string): Promise<User>{
+    async findByEmail(email: string): Promise<any>{
         return this.userModel.findOne({
-            attributes: ['isAdmin', 'id', 'password'],
             where: {
-                email
+                email,
+                isActive: true
             },
             raw: true
         })
@@ -35,23 +40,57 @@ export class UsersService {
 
     async findAdminByEmail(email: string): Promise<any>{
         return this.userModel.findOne({
-            attributes: ['isAdmin', 'id', 'password'],
             where: {
                 email,
-                isAdmin: true
+                isAdmin: true,
+                isActive: true
             },
             raw: true
         })
     }
 
-    async create(payload: CreateUserDto, loggedInUser: any): Promise<User>{
+    async create(payload: CreateUserDto, loggedInUser: any): Promise<any>{
         const { password, ...data } = payload
-        const hash = await bcrypt.hash(password, SALT_ROUNDS);
+        try {
+            const isUserExists = await this.userModel.findOne({
+                where: {
+                    email: data.email
+                }
+            })
+            if (isUserExists) return {
+                status: "user"
+            }
+            const hash = await bcrypt.hash(password, SALT_ROUNDS);
+            const user = await this.userModel.create({
+                ...data,
+                createdBy: loggedInUser.id,
+                password: hash
+            })
+            if (user) return {
+                status: "ok"
+            }
+        } catch (e) {
+            console.error(`Errored out while creating user.`)
+            console.error(e)
+            return {
+                error: "Errored out while creating the user"
+            }
+        }
+
+    }
+
+    async deleteUser(userId, loggedInUser: any): Promise<any>{
+        const user = await this.userModel.findByPk(userId)
+        if (user && loggedInUser.isAdmin) {
+            user.isActive = false
+            await user.save()
+            return {
+                status: "ok"
+            }
+        }
         
-        return this.userModel.create({
-            ...data,
-            createdBy: loggedInUser.id,
-            password: hash
-        })
+        return {
+            error: "Invalid logged in user"
+        }
     }
 }
