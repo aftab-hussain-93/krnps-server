@@ -1,5 +1,5 @@
 import { ApiTags } from '@nestjs/swagger';
-import { Request as RequestType, response, Response } from 'express';
+import { Request as RequestType, Response } from 'express';
 import { Controller, Get, Post, Request, Res, UseGuards, LoggerService, Inject } from '@nestjs/common';
 
 import { LocalAuthGuard } from './local-auth.guard';
@@ -32,19 +32,21 @@ export class AuthController {
 
     @UseGuards(JwtAuthGuard)
     @Get('/profile')
-    async profile(@Request() req: RequestType) {
+    async profile(@Request() req: RequestType, @Res() res: Response) {
         this.logger.log(`Getting Profile. User - ${JSON.stringify(req.user)}`)
         const user = await this.authService.getProfile(req.user)
         if (user) {
             const { password, ...rest } = user
-            return {
-                status: "ok",
+            return res.status(200).json({
+                status: 200,
                 user: rest
-            }
+            })
         }
         this.logger.error(`User Profile not found`)
-        return {
-            error: "User not found"
-        }
+        return res.status(404).json({
+            status: 404,
+            error: 'Not found',
+            message: 'User not found'
+        })
     }
 }

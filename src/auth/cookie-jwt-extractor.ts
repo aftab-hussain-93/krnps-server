@@ -7,6 +7,7 @@ export const cookieExtractor = (req: Request) : string => {
     let token = null;
     if (req && req.cookies) {
         token = req.cookies['id_token'];
-    }
+    } 
+    if (!token) console.error("Auth cookie not found")
     return token;
 };

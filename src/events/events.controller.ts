@@ -62,13 +62,14 @@ export class EventsController {
     @Get('/delete/:id')
     async deleteEvent(@Param('id') id, @Request() req: RequestType, @Response() res: ResponseType) {
         const loggedInUser = req.user
-        const isDeleted = await this.eventService.deleteEvent(id, loggedInUser)
+        const isDeleted: boolean = await this.eventService.deleteEvent(id, loggedInUser)
         if (isDeleted) return res.status(200).json({
-            status: "ok"
+            status: 200,
+            message: 'Event deleted successfully.'
         })
         return res.status(500).json({
-            error: "No such event exists",
-            message: "Could not delete error"
+            status: 400,
+            message: "Could not delete event"
         })
     }
 

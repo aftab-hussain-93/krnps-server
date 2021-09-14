@@ -46,27 +46,40 @@ export class AuthService {
         return null
     }
 
-    login(user: any, response: Response): Response {
+    async login(user: any, response: Response): Promise<Response> {
         this.logger.log(`${this.path} :login: Login user- ${JSON.stringify(user)}`)
-        
-        const payload = { id: user.id, isAdmin: user.isAdmin }
-        const expiresIn = 60 * 60 * 24 * 15; // 15 days
-        response.cookie('id_token', this.jwtService.sign(payload), {
-            httpOnly: true,
-            sameSite: true,
-            maxAge: 1000 * expiresIn,
-            secure: process.env.NODE_ENV == "production"
-        })
-        this.logger.log(`${this.path} :login: Cookie set`)
-        return response.status(200).json({
-            status: 'ok'
-        })
+        try {
+            const { password, ...rest } = await this.userService.findOne(user.id)
+            
+            const payload = { id: user.id, isAdmin: user.isAdmin }
+            const expiresIn = 60 * 60 * 24 * 15; // 15 days
+            response.cookie('id_token', this.jwtService.sign(payload), {
+                httpOnly: true,
+                sameSite: true,
+                maxAge: 1000 * expiresIn,
+                secure: process.env.NODE_ENV == "production"
+            })
+            this.logger.log(`${this.path} :login: Cookie set`)
+            return response.status(200).json({
+                status: 200,
+                user: rest,
+                message: 'Login Successful'
+            })
+        } catch (e) {
+            this.logger.error(`${this.path} :login: Could not login user. Unexpected errror.`)
+            this.logger.error(e)
+            return response.status(500).json({
+                status: 500,
+                error: 'Server Error',
+                message: `Errored out during login. Please try again later.`
+            })
+        }
     }
 
     logout(response: Response): Response {
         response.clearCookie('id_token')
         return response.status(200).json({
-            status: "ok"
+            status: 200
         })
     }
 

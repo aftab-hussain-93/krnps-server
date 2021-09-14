@@ -24,15 +24,18 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api')
   
-  const config = new DocumentBuilder()
-    .setTitle('KRNPS Server API')
-    .setDescription('API Docs')
-    .build()
+
+  if (process.env.NODE_ENV !== "production") {
+    const config = new DocumentBuilder()
+      .setTitle('KRNPS Server API')
+      .setDescription('API Docs')
+      .build()
+
+    const document = SwaggerModule.createDocument(app, config)
+
+    SwaggerModule.setup('/', app, document)
+  }
   
-  const document = SwaggerModule.createDocument(app, config)
-
-  SwaggerModule.setup('/', app, document)
-
   app.useGlobalPipes(new ValidationPipe());
 
   await app.listen(3000);

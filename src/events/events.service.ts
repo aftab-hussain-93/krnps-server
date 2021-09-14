@@ -108,21 +108,24 @@ export class EventsService {
         
     }
     
-    async deleteEvent(eventId: number, loggedInUser: any): Promise<Boolean> {
+    async deleteEvent(eventId: number, loggedInUser: any): Promise<boolean> {
         let where: any = {
             id: eventId
         }
         if (!loggedInUser.isAdmin) where = { ...where, createdBy: loggedInUser.id }
         this.logger.log(`${this.path}: Deleting event. ${eventId}`)
-        
-        const event = await this.eventModel.findOne({
-            where
-        })
-        if (event) {
+        try {
+            const event = await this.eventModel.findOne({
+                where
+            })
+            if (!event) throw new Error(`No such event found`)
             event.deletedAt = new Date(Date.now())
             await event.save()
-            return true
+            return true            
+        } catch (e) {
+            this.logger.error(`${this.path}:deleteEvent: Event could not be deleted. Logged in user ${JSON.stringify(loggedInUser)}`)
+            this.logger.error(e)
+            return false
         }
-        return false
     }
 }

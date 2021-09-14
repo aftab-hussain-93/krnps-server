@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, Post, Request, UseGuards, Inject, LoggerService } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request, UseGuards, Inject, LoggerService, Response } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { User } from './users.model';
 import { UsersService } from './users.service';
-import { Request as RequestType } from 'express';
+import { Request as RequestType, Response as ResponseType } from 'express';
 import { CreateUserDto } from './dto/user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -34,24 +34,60 @@ export class UsersController {
     @Roles(Role.Admin)
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Post()
-    create(
+    async create(
         @Request() req: RequestType,
-        @Body() body: CreateUserDto
-    ): Promise<CreateUserResponse> {
+        @Body() body: CreateUserDto,
+        @Response() res: ResponseType
+    ) {
         const loggedInUser = req.user
         this.logger.log(`Creating user. ${JSON.stringify(body)}. Logged in user ${JSON.stringify(loggedInUser)}`)
-        return this.userService.create(body, loggedInUser)
+        const data = await this.userService.create(body, loggedInUser)
+        res.status(data.status).json({ ...data })
     }
 
     @Roles(Role.Admin)
     @UseGuards(JwtAuthGuard, RolesGuard)
-    @Get('/delete/:id')
-    delete(
+    @Get('/status/:id')
+    async toggleStatus(
         @Param('id') id,
-        @Request() req: RequestType
+        @Request() req: RequestType,
+        @Response() res: ResponseType
     ) {
         const loggedInUser = req.user
-        this.logger.log(`Deleting user with ID. ${id}. Logged in user ${JSON.stringify(loggedInUser)}`)
-        return this.userService.deleteUser(id, loggedInUser)
+        this.logger.log(`Toggle status of user with ID. ${id}. Logged in user ${JSON.stringify(loggedInUser)}`)
+        const { status, message } = await this.userService.toggleStatus(id, loggedInUser)
+        res.status(status).json({
+            status,
+            message
+        })
+    }
+
+    @Roles(Role.Admin)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Get('/:id')
+    async getUserDetails(
+        @Param('id') id,
+        @Request() req: RequestType,
+        @Response() res: ResponseType
+    ) {
+        const loggedInUser = req.user
+        this.logger.log(`Getting details of user with ID. ${id}. Logged in user ${JSON.stringify(loggedInUser)}`)
+        const resp = await this.userService.getUserDetails(id, loggedInUser)
+        res.status(resp.status).json({...resp})
+    }
+
+    @Roles(Role.Admin)
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Post('/:id')
+    async updateUserDetails(
+        @Param('id') id,
+        @Request() req: RequestType,
+        @Response() res: ResponseType,
+        @Body() body: CreateUserDto,
+    ) {
+        const loggedInUser = req.user
+        this.logger.log(`Updating user with ID. ${id}. Logged in user ${JSON.stringify(loggedInUser)}`)
+        const resp = await this.userService.updateUserDetails(id, body, loggedInUser)
+        res.status(resp.status).json({...resp})
     }
 }
