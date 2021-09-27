@@ -11,6 +11,7 @@ import { ReportsModule } from './reports/reports.module';
 import { StaticContentModule } from './static-content/static-content.module';
 import { AuthModule } from './auth/auth.module';
 import { WinstonModule } from 'nest-winston';
+import { PersonalitiesModule } from './personalities/personalities.module';
 import * as winston from 'winston';
 
 @Module({
@@ -42,7 +43,7 @@ import * as winston from 'winston';
         timestamps: false
       }
     }),
-    UsersModule, EventsModule, ReportsModule, StaticContentModule, AuthModule]
+    UsersModule, EventsModule, ReportsModule, StaticContentModule, AuthModule, PersonalitiesModule]
 })
 
 export class AppModule { }

@@ -125,7 +125,7 @@ export const reportUploadOptions = {
     },
     // Check the mimetypes to allow for upload
     fileFilter: (req: any, file: any, cb: any) => {
-        if (file.mimetype.match(/\/(pdf|doc|docx|csv|xlsx|xls)$/)) {
+        if (file.mimetype.match(/\/(pdf|doc|docx|csv|xlsx|xls|jpg|jpeg|png)$/)) {
             // Allow storage of file
             cb(null, true);
         } else {

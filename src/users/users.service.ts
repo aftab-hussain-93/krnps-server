@@ -8,7 +8,6 @@ import * as bcrypt from 'bcrypt';
 const SALT_ROUNDS: number = 10
 
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
-import { first } from 'rxjs';
 
 @Injectable()
 export class UsersService {
